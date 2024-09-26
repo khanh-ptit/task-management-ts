@@ -1,5 +1,6 @@
 import { Request, Response } from "express"
 import Task from "../models/task.model"
+import { SortOrder } from "mongoose"
 
 // [GET] /tasks/
 export const index = async (req: Request, res: Response) => {
@@ -12,11 +13,30 @@ export const index = async (req: Request, res: Response) => {
         deleted: false
     }
     
+    // Filter status
     if (req.query.status) {
         find.status = req.query.status.toString()
     }
+    // End filter status
+    
+    // Sort
+    interface Sort {
+        [key: string]: SortOrder
+    }
 
-    const tasks = await Task.find(find)
+    const sort: Sort = {};
+
+    console.log(req.query.sortKey, req.query.sortValue);
+    
+    if (req.query.sortKey && req.query.sortValue) {
+        const sortKey = req.query.sortKey.toLocaleString();
+        const sortValue = req.query.sortValue.toString().toLowerCase() as SortOrder
+    
+        sort[sortKey] = sortValue; // Gán giá trị động cho key và value trong object
+    }
+    // End sort
+
+    const tasks = await Task.find(find).sort(sort)
 
     if (tasks.length == 0) {
         return res.json({
