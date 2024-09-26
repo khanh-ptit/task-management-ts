@@ -88,7 +88,34 @@ export const detail = async (req: Request, res: Response) => {
     }
 }
 
-// [PATCH] /tasks/change-status
-export const changeStatus = async (req: Request, res: Response) => {
-    
+// [PATCH] /tasks/change-status/:id
+export const changeStatus = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const id = req.params.id
+        const listStatus = ['initial', 'doing', 'finish', 'pending', 'notFinish'] // Dùng collection cũng được
+        const status = req.body.status
+        if (!listStatus.includes(status)) {
+            res.json({
+                code: 404,
+                message: "Trạng thái không hợp lệ!"
+            })
+            return
+        }
+        console.log(id, status)
+        await Task.updateOne({
+            _id: id
+        }, {
+            status: status
+        })
+        res.json({
+            code: 200,
+            message: "Cập nhật trạng thái công!"
+        })
+    } catch (error) {
+        res.json({
+            code: 404,
+            message: "Không tồn tại!"
+        })
+    }
 }
+
