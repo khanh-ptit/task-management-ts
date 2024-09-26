@@ -1,12 +1,15 @@
 import { Request, Response } from "express"
 import Task from "../models/task.model"
 import { SortOrder } from "mongoose"
+import paginationHelper from "../../../helpers/pagination"
+import searchHelper from "../../../helpers/search"
 
 // [GET] /tasks/
 export const index = async (req: Request, res: Response) => {
     interface Find {
         deleted: boolean,
-        status?: string
+        status?: string,
+        title?: RegExp
     }
     
     const find: Find = {
@@ -26,8 +29,6 @@ export const index = async (req: Request, res: Response) => {
 
     const sort: Sort = {};
 
-    console.log(req.query.sortKey, req.query.sortValue);
-    
     if (req.query.sortKey && req.query.sortValue) {
         const sortKey = req.query.sortKey.toLocaleString();
         const sortValue = req.query.sortValue.toString().toLowerCase() as SortOrder
@@ -36,7 +37,22 @@ export const index = async (req: Request, res: Response) => {
     }
     // End sort
 
-    const tasks = await Task.find(find).sort(sort)
+    // Pagination
+    const objectPagination = paginationHelper(req.query)    
+    // End pagination
+
+    // Search
+    const objectSearch = searchHelper(req.query)
+    if (objectSearch.regex) {
+        find.title = objectSearch.regex
+    }
+    // End search
+
+    const tasks = await Task.find(find)
+        .sort(sort)
+        .limit(objectPagination.limitedItem)
+        .skip(objectPagination.skip)
+    
 
     if (tasks.length == 0) {
         return res.json({
@@ -70,4 +86,9 @@ export const detail = async (req: Request, res: Response) => {
             message: "Có lỗi xảy ra!"
         })
     }
+}
+
+// [PATCH] /tasks/change-status
+export const changeStatus = async (req: Request, res: Response) => {
+    
 }
