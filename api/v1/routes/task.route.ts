@@ -13,4 +13,8 @@ router.patch("/change-multi", controller.changeMulti)
 
 router.post("/create", controller.create)
 
+router.patch("/edit/:id", controller.edit)
+
+router.delete("/delete/:id", controller.deleteTask)
+
 export const taskRoutes: Router = router

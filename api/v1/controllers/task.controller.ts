@@ -180,3 +180,74 @@ export const create = async (req: Request, res: Response): Promise<void> => {
         })
     }
 }
+
+// [PATCH] /task/edit/:id
+export const edit = async (req: Request, res: Response): Promise<Response> => {
+    try {
+        const id = req.params.id;
+        console.log(id);
+
+        // Tìm task theo ID và chắc chắn rằng task chưa bị xóa
+        const task = await Task.findOne({
+            _id: id,
+            deleted: false
+        });
+
+        if (!task) {
+            return res.status(404).json({
+                code: 404, // Trả về mã lỗi 404 nếu task không tồn tại
+                message: "Task không tồn tại!"
+            });
+        }
+
+        // Cập nhật task với dữ liệu từ req.body
+        await Task.updateOne({
+            _id: id
+        }, req.body);
+
+        // Trả về phản hồi thành công
+        return res.json({
+            code: 200,
+            message: "Cập nhật thành công task!"
+        });
+    } catch (error) {
+        console.error(`Error updating task: ${error}`);
+        // Trả về lỗi nếu có
+        return res.status(500).json({
+            code: 500,
+            message: "Có lỗi xảy ra!"
+        });
+    }
+};
+
+// [DELETE] /task/delete/:id
+export const deleteTask = async (req: Request, res: Response): Promise<Response> => {
+    try {
+        const id = req.params.id
+        const task = await Task.findOne({
+            _id: id,
+            deleted: false
+        })
+        if (!task) {
+            return res.status(404).json({
+                code: 404,
+                message: "Task không tồn tại!"
+            })
+        }
+
+        await Task.updateOne({
+            _id: id
+        }, {
+            deleted: true
+        })
+        return res.json({
+            code: 200,
+            message: "Xóa thành công task!"
+        })
+    } catch {
+        return res.status(500).json({
+            code: 500,
+            message: "Có lỗi xảy ra!"
+        })
+    }
+};
