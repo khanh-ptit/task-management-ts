@@ -5,7 +5,7 @@ import paginationHelper from "../../../helpers/pagination"
 import searchHelper from "../../../helpers/search"
 
 // [GET] /tasks/
-export const index = async (req: Request, res: Response) => {
+export const index = async (req: Request, res: Response): Promise<Response> => {
     interface Find {
         deleted: boolean,
         status?: string,
@@ -61,13 +61,13 @@ export const index = async (req: Request, res: Response) => {
         })
     }
 
-    res.json({
+    return res.json({
         tasks: tasks
     })
 }
 
 // [GET] /tasks/detail/:id
-export const detail = async (req: Request, res: Response) => {
+export const detail = async (req: Request, res: Response): Promise<Response> => {
     const id = req.params.id
     try {
         // console.log(id)
@@ -76,12 +76,12 @@ export const detail = async (req: Request, res: Response) => {
             deleted: false
         })
 
-        res.json({
+        return res.json({
             code: 200,
             task: task
         })
     } catch (error) {
-        res.json({
+        return res.json({
             code: 400,
             message: "Có lỗi xảy ra!"
         })
@@ -89,17 +89,16 @@ export const detail = async (req: Request, res: Response) => {
 }
 
 // [PATCH] /tasks/change-status/:id
-export const changeStatus = async (req: Request, res: Response): Promise<void> => {
+export const changeStatus = async (req: Request, res: Response): Promise<Response> => {
     try {
         const id = req.params.id
         const listStatus = ['initial', 'doing', 'finish', 'pending', 'notFinish'] // Dùng collection cũng được
         const status = req.body.status
         if (!listStatus.includes(status)) {
-            res.json({
+            return res.json({
                 code: 404,
                 message: "Trạng thái không hợp lệ!"
             })
-            return
         }
         console.log(id, status)
         await Task.updateOne({
@@ -107,12 +106,12 @@ export const changeStatus = async (req: Request, res: Response): Promise<void> =
         }, {
             status: status
         })
-        res.json({
+        return res.json({
             code: 200,
             message: "Cập nhật trạng thái công!"
         })
     } catch (error) {
-        res.json({
+        return res.json({
             code: 404,
             message: "Không tồn tại!"
         })
@@ -120,7 +119,7 @@ export const changeStatus = async (req: Request, res: Response): Promise<void> =
 }
 
 // [PATCH] /tasks/change-multi
-export const changeMulti = async (req: Request, res: Response): Promise<void> => {
+export const changeMulti = async (req: Request, res: Response): Promise<Response> => {
     // console.log(req.body)
     const key: string = req.body.key
     const ids: string[] = req.body.ids
@@ -134,12 +133,24 @@ export const changeMulti = async (req: Request, res: Response): Promise<void> =>
             }, {
                 status: value
             })
-            res.json({
+            return res.status(200).json({
                 code: 200,
                 message: `Cập nhật trạng thái thành công cho ${ids.length} task`
             })
             break;
         case "delete":
+            const tasks = await Task.find({
+                _id: {
+                    $in: ids,
+                },
+                deleted: false
+            })
+            if (tasks.length == 0) {
+                return res.status(404).json({
+                    code: 404,
+                    message: "Task không tồn tại!"
+                })
+            }
             await Task.updateMany({
                 _id: {
                     $in: ids
@@ -147,13 +158,13 @@ export const changeMulti = async (req: Request, res: Response): Promise<void> =>
             }, {
                 deleted: true
             })
-            res.json({
+            return res.status(200).json({
                 code: 200,
-                message: `Xóa thành công ${ids.length} task`
+                message: `Xóa thành công ${ids.length} task!`
             })
             break;
         default:
-            res.status(400).json({
+            return res.status(400).json({
                 code: 400,
                 message: "Trường bạn muốn cập nhật không hợp lệ"
             });
@@ -163,18 +174,18 @@ export const changeMulti = async (req: Request, res: Response): Promise<void> =>
 }
 
 // [POST] /tasks/create
-export const create = async (req: Request, res: Response): Promise<void> => {
+export const create = async (req: Request, res: Response): Promise<Response> => {
     try {
         // console.log(req.body)
         const task = new Task(req.body)
         await task.save()
-        res.json({
+        return res.json({
             code: 400,
             message: "Tạo thành công task!",
             task: task
         })
     } catch (error) {
-        res.json({
+        return res.json({
             code: 200,
             message: "Có lỗi xảy ra!"
         })
