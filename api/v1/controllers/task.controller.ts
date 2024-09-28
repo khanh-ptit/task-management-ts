@@ -161,3 +161,22 @@ export const changeMulti = async (req: Request, res: Response): Promise<void> =>
     }
     
 }
+
+// [POST] /tasks/create
+export const create = async (req: Request, res: Response): Promise<void> => {
+    try {
+        // console.log(req.body)
+        const task = new Task(req.body)
+        await task.save()
+        res.json({
+            code: 400,
+            message: "Tạo thành công task!",
+            task: task
+        })
+    } catch (error) {
+        res.json({
+            code: 200,
+            message: "Có lỗi xảy ra!"
+        })
+    }
+}
